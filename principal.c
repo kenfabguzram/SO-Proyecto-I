@@ -53,7 +53,7 @@ void imprimir_laberinto(char** laberinto, int filas, int columnas) {
 }
 
 int main() {
-    const char* nombre_archivo = "laberinto.txt";
+    const char* nombre_archivo = "C:\\Users\\kenda\\OneDrive\\Documentos\\GitHub\\SO-Proyecto-I\\laberinto.txt";
     int filas, columnas;
 
     // Leer el laberinto desde el archivo
