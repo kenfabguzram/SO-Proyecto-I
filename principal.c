@@ -3,23 +3,11 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <stdbool.h>
-
+#include "diccionario.c"
 #define ARRIBA 0
 #define ABAJO 1
 #define IZQUIERDA 2
 #define DERECHA 3
-#define ARRIBA_ABAJO 4
-#define ARRIBA_IZQUIERDA 5
-#define ARRIBA_DERECHA 6
-#define ABAJO_IZQUIERDA 7
-#define ABAJO_DERECHA 8
-#define IZQUIERDA_DERECHA 9
-#define ARRIBA_ABAJO_IZQUIERDA 10
-#define ARRIBA_ABAJO_DERECHA 11
-#define ARRIBA_IZQUIERDA_DERECHA 12
-#define ABAJO_IZQUIERDA_DERECHA 13
-#define ARRIBA_ABAJO_IZQUIERDA_DERECHA 14
-#define NO_CAMINADA 15
 
 #define ESQUINA_SUPERIOR_IZQUIERDA 0
 #define ESQUINA_SUPERIOR_DERECHA 1
@@ -36,7 +24,7 @@
 #define PASILLO 2
 
 struct Casilla {
-    int direccionesCaminadas;
+    struct diccionario* direccionesCaminadas;
     int posicionMatriz;
     int tipo;
     int fila;
@@ -49,10 +37,30 @@ struct GestorLaberinto {
     int filaMax;
     int columnaMax;
     int intervalo_segundos;
+    struct hiloArgumentos* hilos;
+    int contadorHilos;
 };
+struct hiloArgumentos{
+    int direccion;
+    int filaActual;
+    int columnaActual;
+    bool terminado;
+    int numeroHilo;
 
+};
+/*void* gestionaHilos(void* arg) {
+    struct GestorLaberinto* gestor = (struct GestorLaberinto*)arg;
+    struct hiloArgumentos* hilos = malloc(gestor->filaMax*gestor->columnaMax * sizeof(struct hiloArgumentos));
+    gestor->hilos=hilos;
 
+    pthread_t hiloInicial;
+    pthread_create(&hiloInicial, NULL, moverHilo, (void*)gestor);
+    pthread_join(hiloInicial, NULL);
+}
+void* moverHilo(void* arg) {
+    struct GestorLaberinto* gestor = (struct GestorLaberinto*)arg;
 
+}*/
 void* imprimir_laberinto_periodicamente(void* arg) {
     struct GestorLaberinto* gestor = (struct GestorLaberinto*)arg;
 
@@ -70,15 +78,6 @@ void* imprimir_laberinto_periodicamente(void* arg) {
     }
 
     return NULL;
-}
-
-int buscarNumero(int* array, int tamano, int numero) {
-    for (int i = 0; i < tamano; i++) {
-        if (array[i] == numero) {
-            return i;
-        }
-    }
-    return -1;
 }
 
 struct GestorLaberinto* leer_laberinto(const char* nombre_archivo) {
@@ -122,8 +121,11 @@ struct GestorLaberinto* leer_laberinto(const char* nombre_archivo) {
             laberinto[i][j].elemento = letra;
             laberinto[i][j].fila = i;
             laberinto[i][j].columna = j;
-            laberinto[i][j].direccionesCaminadas = 15;
-
+            laberinto[i][j].direccionesCaminadas=malloc(sizeof(struct diccionario));
+            insertar(laberinto[i][j].direccionesCaminadas, ARRIBA, false);
+            insertar(laberinto[i][j].direccionesCaminadas, ABAJO, false);
+            insertar(laberinto[i][j].direccionesCaminadas, IZQUIERDA, false);
+            insertar(laberinto[i][j].direccionesCaminadas, DERECHA, false);
             if (i == 0 && j == 0)
                 laberinto[i][j].posicionMatriz = ESQUINA_SUPERIOR_IZQUIERDA;
             else if (i == 0 && j == columna - 1)
