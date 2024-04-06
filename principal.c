@@ -162,7 +162,9 @@ struct GestorLaberinto* leer_laberinto(const char* nombre_archivo) {
 
 int main() {
     const char* nombre_archivo = "laberinto.txt";
+
     struct GestorLaberinto* gestorLaberinto;
+
 
     gestorLaberinto = leer_laberinto(nombre_archivo);
 
