@@ -41,6 +41,7 @@ struct GestorLaberinto {
     int contadorHilos;
     int direccion;
 };
+
 struct hiloArgumentos{
     int direccion;
     int filaActual;
@@ -146,7 +147,6 @@ struct GestorLaberinto* leer_laberinto(const char* nombre_archivo) {
                 laberinto[i][j].posicionMatriz = LADO_DERECHO;
             else
                 laberinto[i][j].posicionMatriz = CENTRO;
-
             if (letra == '*')
                 laberinto[i][j].tipo = MURO;
             if (letra == ' ')
@@ -307,8 +307,8 @@ int main() {
     pthread_t thread_creador;
     pthread_create(&thread_creador, NULL, creador, (void*)gestorLaberinto);
 
-    pthread_join(thread_impresion, NULL);
     pthread_join(thread_creador, NULL);
+    pthread_join(thread_impresion, NULL);
 
     return 0;
 }
