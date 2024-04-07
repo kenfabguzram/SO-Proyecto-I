@@ -3,26 +3,22 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <stdbool.h>
-#include "diccionario.c"
-#define ARRIBA 0
-#define ABAJO 1
-#define IZQUIERDA 2
-#define DERECHA 3
+#include "diccionario.c" // Este archivo debe contener la implementación de las funciones del diccionario
 
-#define ESQUINA_SUPERIOR_IZQUIERDA 0
-#define ESQUINA_SUPERIOR_DERECHA 1
-#define ESQUINA_INFERIOR_IZQUIERDA 2
-#define ESQUINA_INFERIOR_DERECHA 3
-#define LADO_DERECHO 4
-#define LADO_IZQUIERDO 5
-#define LADO_SUPERIOR 6
-#define LADO_INFERIOR 7
-#define CENTRO 8
+#define ARRIBA '^'
+#define ABAJO 'v'
+#define IZQUIERDA '<'
+#define DERECHA '>'
 
+
+
+
+// Definición de constantes para el tipo de casilla
 #define MURO 0
 #define META 1
-#define PASILLO 2
+#define PASILLO 2 // Definición de PASILLO
 
+// Estructura para representar una casilla del laberinto
 struct Casilla {
     struct diccionario* direccionesCaminadas;
     int posicionMatriz;
@@ -32,40 +28,160 @@ struct Casilla {
     char elemento;
 };
 
+// Estructura para representar el gestor del laberinto
 struct GestorLaberinto {
+    pthread_mutex_t mutex;
     struct Casilla** laberinto;
     int filaMax;
     int columnaMax;
     int intervalo_segundos;
-    struct hiloArgumentos* hilos;
-    int contadorHilos;
+    int numeroHilos;
+    pthread_t* hilos;
+    struct HiloArgumentos* arg;
 };
-struct hiloArgumentos{
+
+// Estructura para pasar argumentos a cada hilo
+struct HiloArgumentos {
+    struct GestorLaberinto* gestor;
     int direccion;
     int filaActual;
     int columnaActual;
-    bool terminado;
-    int numeroHilo;
-
+    int idHilo;
 };
-/*void* gestionaHilos(void* arg) {
-    struct GestorLaberinto* gestor = (struct GestorLaberinto*)arg;
-    struct hiloArgumentos* hilos = malloc(gestor->filaMax*gestor->columnaMax * sizeof(struct hiloArgumentos));
-    gestor->hilos=hilos;
+void creaHilo(struct GestorLaberinto* gestor,int direccion,int filaActual, int columnaActual);
 
-    pthread_t hiloInicial;
-    pthread_create(&hiloInicial, NULL, moverHilo, (void*)gestor);
-    pthread_join(hiloInicial, NULL);
+// Función para moverse en el laberinto
+void moverse(struct HiloArgumentos* arg) {
+    struct GestorLaberinto* gestor = arg->gestor;
+    int fila = arg->filaActual;
+    int columna = arg->columnaActual;
+    int direccion = arg->direccion;
+    int idHilo=arg->idHilo;
+    int direccionOpuesta;
+    switch(direccion){
+        case ARRIBA:
+            direccionOpuesta=ABAJO;
+            break;
+        case IZQUIERDA:
+            direccionOpuesta=DERECHA;
+            break;
+        case ABAJO:
+            direccionOpuesta=ARRIBA;
+            break;
+        case DERECHA:
+            direccionOpuesta=IZQUIERDA;
+            break;
+    }
+
+    while (fila >= 0 &&
+     fila < gestor->filaMax &&
+     columna >= 0 && 
+     columna < gestor->columnaMax && 
+     gestor->laberinto[fila][columna].tipo == PASILLO && 
+     !buscar(gestor->laberinto[fila][columna].direccionesCaminadas, direccion) &&
+     !buscar(gestor->laberinto[fila][columna].direccionesCaminadas, direccionOpuesta)
+     ) {
+        // Marcar la dirección como visitada
+        insertar(gestor->laberinto[fila][columna].direccionesCaminadas, direccion, true);
+        gestor->laberinto[fila][columna].elemento=(char)direccion;
+        printf("Hilo %d en dirección %c está en fila %d, columna %d\n",idHilo,(char) direccion, fila, columna);
+        sleep(gestor->intervalo_segundos);
+        // Imprimir movimiento en pantalla
+            // Determinar la nueva posición según la dirección
+        switch (direccion) {
+            case ARRIBA:
+                if(columna-1 >= 0 &&
+                columna-1 < gestor->columnaMax &&
+                gestor->laberinto[fila][columna-1].tipo==PASILLO &&
+                !buscar(gestor->laberinto[fila][columna-1].direccionesCaminadas, IZQUIERDA)){
+                    creaHilo(gestor,IZQUIERDA,fila, columna-1);
+                }
+                if(columna+1 >= 0 &&
+                columna+1 < gestor->columnaMax &&
+                gestor->laberinto[fila][columna+1].tipo==PASILLO &&
+                !buscar(gestor->laberinto[fila][columna+1].direccionesCaminadas, DERECHA)){
+                    creaHilo(gestor,DERECHA,fila, columna+1);
+                }
+                
+                fila--;
+                break;
+            case ABAJO:
+                if(columna-1 >= 0 &&
+                columna-1 < gestor->columnaMax &&
+                gestor->laberinto[fila][columna-1].tipo==PASILLO &&
+                !buscar(gestor->laberinto[fila][columna-1].direccionesCaminadas, IZQUIERDA)){
+                    creaHilo(gestor,IZQUIERDA,fila, columna-1);
+                }
+                if(columna+1 >= 0 &&
+                columna+1 < gestor->columnaMax &&
+                gestor->laberinto[fila][columna+1].tipo==PASILLO &&
+                !buscar(gestor->laberinto[fila][columna+1].direccionesCaminadas, DERECHA)){
+                    creaHilo(gestor,DERECHA,fila, columna+1);
+                }
+                fila++;
+                break;
+            case IZQUIERDA:
+                if(fila+1 >= 0 &&
+                fila+1 < gestor->filaMax &&
+                gestor->laberinto[fila+1][columna].tipo==PASILLO &&
+                !buscar(gestor->laberinto[fila+1][columna].direccionesCaminadas, ABAJO)){
+                    creaHilo(gestor,ABAJO,fila+1, columna);
+                }
+                if(fila-1 >= 0 &&
+                fila-1 < gestor->filaMax &&
+                gestor->laberinto[fila-1][columna].tipo==PASILLO &&
+                !buscar(gestor->laberinto[fila-1][columna].direccionesCaminadas, ARRIBA)){
+                    creaHilo(gestor,ARRIBA,fila-1, columna);
+                }
+                columna--;
+                break;
+            case DERECHA:
+                if(fila+1 >= 0 &&
+                fila+1 < gestor->filaMax &&
+                gestor->laberinto[fila+1][columna].tipo==PASILLO &&
+                !buscar(gestor->laberinto[fila+1][columna].direccionesCaminadas, ABAJO)){
+                    creaHilo(gestor,ABAJO,fila+1, columna);
+                }
+                if(fila-1 >= 0 &&
+                fila-1 < gestor->filaMax &&
+                gestor->laberinto[fila-1][columna].tipo==PASILLO &&
+                !buscar(gestor->laberinto[fila-1][columna].direccionesCaminadas, ARRIBA)){
+                    creaHilo(gestor,ARRIBA,fila-1, columna);
+                }
+                columna++;
+                break;
+        }
+
+    }
+    if (fila >= 0 &&
+     fila < gestor->filaMax &&
+     columna >= 0 && 
+     columna < gestor->columnaMax && 
+     gestor->laberinto[fila][columna].tipo == META && 
+     !buscar(gestor->laberinto[fila][columna].direccionesCaminadas, direccion) &&
+     !buscar(gestor->laberinto[fila][columna].direccionesCaminadas, direccionOpuesta)
+     ){
+        printf("EL HILO %d LLEGO A LA SALIDA DEL LABERNTO EN LA FILA %d Y COLUMNA %d",gestor->numeroHilos, fila, columna);
+     }
 }
-void* moverHilo(void* arg) {
-    struct GestorLaberinto* gestor = (struct GestorLaberinto*)arg;
+void creaHilo(struct GestorLaberinto* gestor,int direccion,int filaActual, int columnaActual){
+    gestor->numeroHilos++;
+    gestor->arg[gestor->numeroHilos].idHilo=gestor->numeroHilos;
+    gestor->arg[gestor->numeroHilos].direccion=direccion;
+    gestor->arg[gestor->numeroHilos].gestor=gestor;
+    gestor->arg[gestor->numeroHilos].filaActual=filaActual;
+    gestor->arg[gestor->numeroHilos].columnaActual=columnaActual;
 
-}*/
+    pthread_create(&gestor->hilos[gestor->numeroHilos], NULL, (void* (*)(void*))moverse, (void*)&gestor->arg[gestor->numeroHilos]);
+}
+
+// Función para imprimir el laberinto periódicamente
 void* imprimir_laberinto_periodicamente(void* arg) {
     struct GestorLaberinto* gestor = (struct GestorLaberinto*)arg;
 
     while (1) {
         printf("Laberinto actual:\n");
+        pthread_mutex_lock(&gestor->mutex); // Bloquear el mutex antes de acceder a la estructura compartida
         for (int i = 0; i < gestor->filaMax; i++) {
             for (int j = 0; j < gestor->columnaMax; j++) {
                 printf("%c", gestor->laberinto[i][j].elemento);
@@ -73,7 +189,7 @@ void* imprimir_laberinto_periodicamente(void* arg) {
             printf("\n");
         }
         printf("\n");
-
+        pthread_mutex_unlock(&gestor->mutex);
         sleep(gestor->intervalo_segundos);
     }
 
@@ -121,35 +237,12 @@ struct GestorLaberinto* leer_laberinto(const char* nombre_archivo) {
             laberinto[i][j].elemento = letra;
             laberinto[i][j].fila = i;
             laberinto[i][j].columna = j;
-            laberinto[i][j].direccionesCaminadas=malloc(sizeof(struct diccionario));
-            insertar(laberinto[i][j].direccionesCaminadas, ARRIBA, false);
-            insertar(laberinto[i][j].direccionesCaminadas, ABAJO, false);
-            insertar(laberinto[i][j].direccionesCaminadas, IZQUIERDA, false);
-            insertar(laberinto[i][j].direccionesCaminadas, DERECHA, false);
-            if (i == 0 && j == 0)
-                laberinto[i][j].posicionMatriz = ESQUINA_SUPERIOR_IZQUIERDA;
-            else if (i == 0 && j == columna - 1)
-                laberinto[i][j].posicionMatriz = ESQUINA_SUPERIOR_DERECHA;
-            else if (i == fila - 1 && j == 0)
-                laberinto[i][j].posicionMatriz = ESQUINA_INFERIOR_IZQUIERDA;
-            else if (i == fila - 1 && j == columna - 1)
-                laberinto[i][j].posicionMatriz = ESQUINA_INFERIOR_DERECHA;
-            else if (i == 0)
-                laberinto[i][j].posicionMatriz = LADO_SUPERIOR;
-            else if (i == fila - 1)
-                laberinto[i][j].posicionMatriz = LADO_INFERIOR;
-            else if (j == 0)
-                laberinto[i][j].posicionMatriz = LADO_IZQUIERDO;
-            else if (j == columna - 1)
-                laberinto[i][j].posicionMatriz = LADO_DERECHO;
-            else
-                laberinto[i][j].posicionMatriz = CENTRO;
-
+            laberinto[i][j].direccionesCaminadas = crear_diccionario();
             if (letra == '*')
                 laberinto[i][j].tipo = MURO;
-            if (letra == ' ')
+            else if (letra == ' ')
                 laberinto[i][j].tipo = PASILLO;
-            if (letra == '/')
+            else if (letra == '/')
                 laberinto[i][j].tipo = META;
         }
         fgetc(archivo);
@@ -158,6 +251,24 @@ struct GestorLaberinto* leer_laberinto(const char* nombre_archivo) {
     gestor->laberinto = laberinto;
     fclose(archivo);
     return gestor;
+}
+
+
+// Definiciones de constantes y estructuras omitidas por brevedad
+
+void liberar_laberinto(struct GestorLaberinto* gestor) {
+    for (int i = 0; i < gestor->filaMax; i++) {
+        for (int j = 0; j < gestor->columnaMax; j++) {
+            // Liberar la memoria de direccionesCaminadas en cada Casilla
+            liberar_diccionario(gestor->laberinto[i][j].direccionesCaminadas);
+        }
+        // Liberar las filas del laberinto
+        free(gestor->laberinto[i]);
+    }
+    // Liberar el laberinto
+    free(gestor->laberinto);
+    // Liberar el gestorLaberinto
+    free(gestor);
 }
 
 int main() {
@@ -172,12 +283,24 @@ int main() {
     printf("Filas: %d\n", gestorLaberinto->filaMax);
     printf("Columnas: %d\n", gestorLaberinto->columnaMax);
 
-    gestorLaberinto->intervalo_segundos = 5;
-
+    gestorLaberinto->intervalo_segundos = 1;
+    if (pthread_mutex_init(&gestorLaberinto->mutex, NULL) != 0) {
+        printf("Error al inicializar el mutex\n");
+        exit(EXIT_FAILURE);
+    }
     pthread_t thread_impresion;
     pthread_create(&thread_impresion, NULL, imprimir_laberinto_periodicamente, (void*)gestorLaberinto);
 
+    // Crear hilo para iniciar el recorrido del laberinto
+    gestorLaberinto->arg= malloc(4*gestorLaberinto->filaMax*gestorLaberinto->columnaMax*sizeof(struct HiloArgumentos));
+    gestorLaberinto->hilos = malloc(4*gestorLaberinto->filaMax*gestorLaberinto->columnaMax*sizeof(pthread_t));
+    gestorLaberinto->numeroHilos=-1;
+    creaHilo(gestorLaberinto,ABAJO,0, 0);
     pthread_join(thread_impresion, NULL);
+    free(gestorLaberinto->hilos);
+    // Liberar la memoria asignada
+    liberar_laberinto(gestorLaberinto);
+    
 
     return 0;
 }

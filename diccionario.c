@@ -1,3 +1,6 @@
+#ifndef DICCIONARIO_H
+#define DICCIONARIO_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -19,6 +22,20 @@ struct diccionario {
 // Función de hash simple para convertir la clave en un índice dentro de la tabla
 int hash(int clave) {
     return clave % TABLE_SIZE;
+}
+struct diccionario* crear_diccionario() {
+    struct diccionario* nuevo_diccionario = malloc(sizeof(struct diccionario));
+    if (nuevo_diccionario == NULL) {
+        fprintf(stderr, "Error: no se pudo asignar memoria para el diccionario.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Inicializar cada entrada en la tabla hash como NULL
+    for (int i = 0; i < TABLE_SIZE; i++) {
+        nuevo_diccionario->tabla[i] = NULL;
+    }
+
+    return nuevo_diccionario;
 }
 
 // Función para crear un nuevo elemento del diccionario
@@ -132,3 +149,6 @@ int main() {
     return 0;
 }
 */
+
+
+#endif /* DICCIONARIO_H */
