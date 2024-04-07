@@ -1,0 +1,101 @@
+Hilo 0 en dirección 1 se mueve a fila 0, columna 0
+Gestor: NumeroHilos: 0 
+fila: 0 
+columna: 0 
+direccion: 1 
+idHilo: 0 
+Hilo 0 en dirección 1 se mueve a fila 1, columna 0
+Gestor: NumeroHilos: 0 
+fila: 1 
+columna: 0 
+direccion: 1 
+idHilo: 0 
+
+Hilo 0 en dirección 1 se mueve a fila 2, columna 0
+Gestor: NumeroHilos: 2 
+fila: 2 
+columna: 0 
+direccion: 1 
+idHilo: 0 
+
+Hilo 0 en dirección 1 se mueve a fila 3, columna 0
+Gestor: NumeroHilos: 2 
+fila: 3 
+columna: 0 
+direccion: 1 
+idHilo: 0 
+
+Hilo 0 en dirección 1 se mueve a fila 4, columna 0
+Gestor: NumeroHilos: 4 
+fila: 4 
+columna: 0 
+direccion: 1 
+idHilo: 0 
+
+
+Hilo 1 en dirección 0 se mueve a fila 1, columna 0
+Gestor: NumeroHilos: 1 
+fila: 1 
+columna: 0 
+direccion: 0 
+idHilo: 1 
+Hilo 1 en dirección 0 se mueve a fila 0, columna 0
+Gestor: NumeroHilos: 2 
+fila: 0 
+columna: 0 
+direccion: 0 
+idHilo: 1 
+
+Hilo 3 en dirección 0 se mueve a fila 3, columna 0
+Gestor: NumeroHilos: 3 
+fila: 3 
+columna: 0 
+direccion: 0 
+idHilo: 3 
+Hilo 3 en dirección 0 se mueve a fila 2, columna 0
+Gestor: NumeroHilos: 4 
+fila: 2 
+columna: 0 
+direccion: 0 
+idHilo: 3 
+
+Hilo 5 en dirección 3 se mueve a fila 4, columna 0
+Gestor: NumeroHilos: 5 
+fila: 4 
+columna: 0 
+direccion: 3 
+idHilo: 5 
+Hilo 5 en dirección 3 se mueve a fila 4, columna 1
+Gestor: NumeroHilos: 5 
+fila: 4 
+columna: 1 
+direccion: 3 
+idHilo: 5 
+Hilo 6 en dirección 2 se mueve a fila 4, columna 0
+Gestor: NumeroHilos: 6 
+fila: 4 
+columna: 0 
+direccion: 2 
+idHilo: 6 
+Hilo 5 en dirección 3 se mueve a fila 4, columna 2
+Gestor: NumeroHilos: 6 
+fila: 4 
+columna: 2 
+direccion: 3 
+idHilo: 5 
+Hilo 8 en dirección 0 se mueve a fila 4, columna 0
+Gestor: NumeroHilos: 8 
+fila: 4 
+columna: 0 
+direccion: 0 
+idHilo: 8 
+Laberinto actual:
+ *   *****
+ * *      
+ * * ***  
+ * *****  
+   *   *  
+** * *  * 
+ * * * *  
+     * ***
+**** *   *
