@@ -23,8 +23,11 @@
 #define META 1
 #define PASILLO 2
 
-struct Casilla {
-    struct diccionario* direccionesCaminadas;
+#define MAX_HILOS 50
+
+struct Casilla
+{
+    struct diccionario *direccionesCaminadas;
     int posicionMatriz;
     int tipo;
     int fila;
@@ -32,23 +35,25 @@ struct Casilla {
     char elemento;
 };
 
-struct GestorLaberinto {
-    struct Casilla** laberinto;
+struct GestorLaberinto
+{
+    struct Casilla **laberinto;
     int filaMax;
     int columnaMax;
     int intervalo_segundos;
-    struct hiloArgumentos* hilos;
+    struct hiloArgumentos *hilos;
     int contadorHilos;
     int direccion;
 };
 
-struct hiloArgumentos{
+struct hiloArgumentos
+{
     int direccion;
     int filaActual;
     int columnaActual;
     bool terminado;
     int numeroHilo;
-
+    pthread_t hilo;
 };
 /*void* gestionaHilos(void* arg) {
     struct GestorLaberinto* gestor = (struct GestorLaberinto*)arg;
@@ -63,13 +68,17 @@ void* moverHilo(void* arg) {
     struct GestorLaberinto* gestor = (struct GestorLaberinto*)arg;
 
 }*/
-void* imprimir_laberinto_periodicamente(void* arg) {
-    struct GestorLaberinto* gestor = (struct GestorLaberinto*)arg;
+void *imprimir_laberinto_periodicamente(void *arg)
+{
+    struct GestorLaberinto *gestor = (struct GestorLaberinto *)arg;
 
-    while (1) {
+    while (1)
+    {
         printf("Laberinto actual:\n");
-        for (int i = 0; i < gestor->filaMax; i++) {
-            for (int j = 0; j < gestor->columnaMax; j++) {
+        for (int i = 0; i < gestor->filaMax; i++)
+        {
+            for (int j = 0; j < gestor->columnaMax; j++)
+            {
                 printf("%c", gestor->laberinto[i][j].elemento);
             }
             printf("\n");
@@ -82,15 +91,18 @@ void* imprimir_laberinto_periodicamente(void* arg) {
     return NULL;
 }
 
-struct GestorLaberinto* leer_laberinto(const char* nombre_archivo) {
-    FILE* archivo = fopen(nombre_archivo, "r");
-    if (archivo == NULL) {
+struct GestorLaberinto *leer_laberinto(const char *nombre_archivo)
+{
+    FILE *archivo = fopen(nombre_archivo, "r");
+    if (archivo == NULL)
+    {
         printf("Error al abrir el archivo.\n");
         exit(EXIT_FAILURE);
     }
 
-    struct GestorLaberinto* gestor = malloc(sizeof(struct GestorLaberinto));
-    if (gestor == NULL) {
+    struct GestorLaberinto *gestor = malloc(sizeof(struct GestorLaberinto));
+    if (gestor == NULL)
+    {
         printf("Error al asignar memoria.\n");
         exit(EXIT_FAILURE);
     }
@@ -100,31 +112,40 @@ struct GestorLaberinto* leer_laberinto(const char* nombre_archivo) {
     gestor->filaMax = fila;
     gestor->columnaMax = columna;
     gestor->direccion = DERECHA;
+    gestor->contadorHilos = 0;
+
+    struct hiloArgumentos *hilos = malloc(MAX_HILOS * sizeof(struct hiloArgumentos));
+    gestor->hilos = hilos;
 
     fgetc(archivo);
 
-    struct Casilla** laberinto = malloc(fila * sizeof(struct Casilla*));
-    if (laberinto == NULL) {
+    struct Casilla **laberinto = malloc(fila * sizeof(struct Casilla *));
+    if (laberinto == NULL)
+    {
         printf("Error al asignar memoria.\n");
         exit(EXIT_FAILURE);
     }
 
-    for (int i = 0; i < fila; i++) {
+    for (int i = 0; i < fila; i++)
+    {
         laberinto[i] = malloc(columna * sizeof(struct Casilla));
-        if (laberinto[i] == NULL) {
+        if (laberinto[i] == NULL)
+        {
             printf("Error al asignar memoria.\n");
             exit(EXIT_FAILURE);
         }
     }
 
     char letra;
-    for (int i = 0; i < fila; i++) {
-        for (int j = 0; j < columna; j++) {
+    for (int i = 0; i < fila; i++)
+    {
+        for (int j = 0; j < columna; j++)
+        {
             letra = fgetc(archivo);
             laberinto[i][j].elemento = letra;
             laberinto[i][j].fila = i;
             laberinto[i][j].columna = j;
-            laberinto[i][j].direccionesCaminadas=malloc(sizeof(struct diccionario));
+            laberinto[i][j].direccionesCaminadas = malloc(sizeof(struct diccionario));
             insertar(laberinto[i][j].direccionesCaminadas, ARRIBA, false);
             insertar(laberinto[i][j].direccionesCaminadas, ABAJO, false);
             insertar(laberinto[i][j].direccionesCaminadas, IZQUIERDA, false);
@@ -162,126 +183,226 @@ struct GestorLaberinto* leer_laberinto(const char* nombre_archivo) {
     return gestor;
 }
 
-bool revisar_adjacentes_t(int row, int column, struct GestorLaberinto* gestorLaberinto) {
+bool revisar_adjacentes_t(int row, int column, struct GestorLaberinto *gestorLaberinto)
+{
     int filaMax = gestorLaberinto->filaMax;
-    struct Casilla** laberinto = gestorLaberinto->laberinto;
-    if (row - 1 < 0) {
+    struct Casilla **laberinto = gestorLaberinto->laberinto;
+    if (row - 1 < 0)
+    {
         return false;
     }
-    
+
     return true;
 }
 
-bool revisar_adjacentes_b(int row, int column, struct GestorLaberinto* gestorLaberinto) {
+bool revisar_adjacentes_b(int row, int column, struct GestorLaberinto *gestorLaberinto)
+{
     int filaMax = gestorLaberinto->filaMax;
-    struct Casilla** laberinto = gestorLaberinto->laberinto;
-    if (row + 1 >= filaMax) {
+    struct Casilla **laberinto = gestorLaberinto->laberinto;
+    if (row + 1 >= filaMax)
+    {
         return false;
     }
-    
+
     return true;
 }
 
-bool revisar_adjacentes_i(int row, int column, struct GestorLaberinto* gestorLaberinto) {
+bool revisar_adjacentes_i(int row, int column, struct GestorLaberinto *gestorLaberinto)
+{
     int columnaMax = gestorLaberinto->columnaMax;
-    struct Casilla** laberinto = gestorLaberinto->laberinto;
-    if (column - 1 < 0) {
+    struct Casilla **laberinto = gestorLaberinto->laberinto;
+    if (column - 1 < 0)
+    {
         return false;
     }
-    
+
     return true;
 }
 
-bool revisar_adjacentes_d(int row, int column, struct GestorLaberinto* gestorLaberinto) {
+bool revisar_adjacentes_d(int row, int column, struct GestorLaberinto *gestorLaberinto)
+{
     int columnaMax = gestorLaberinto->columnaMax;
-    struct Casilla** laberinto = gestorLaberinto->laberinto;
-    if (column + 1 >= columnaMax) {
+    struct Casilla **laberinto = gestorLaberinto->laberinto;
+    if (column + 1 >= columnaMax)
+    {
         return false;
     }
-    
+
     return true;
 }
 
-//Codigo de los hilos
-void* creador(void* arg) {
-    struct GestorLaberinto* gestor = (struct GestorLaberinto*)arg;
-    struct Casilla** laberinto = (struct Casilla**) gestor->laberinto;
-    int filaActual = 0;
-    int columnaActual = 0;
-    int direccion = gestor->direccion;
-    bool terminado = false;
-    int numeroHilo = 0;
+// Codigo de los hilos
+void *creador(void *arg)
+{
+    struct GestorLaberinto *gestor = (struct GestorLaberinto *)arg;
+    struct Casilla **laberinto = (struct Casilla **)gestor->laberinto;
+    int filaActual = gestor->hilos[gestor->contadorHilos].filaActual;
+    int columnaActual = gestor->hilos[gestor->contadorHilos].columnaActual;
+    int direccion = gestor->hilos[gestor->contadorHilos].direccion;
+    bool terminado = gestor->hilos[gestor->contadorHilos].terminado;
+    int numeroHilo = gestor->contadorHilos;
+    struct hiloArgumentos *hiloQueue = malloc(2 * sizeof(struct hiloArgumentos));
+    bool newHilo1 = false;
+    bool newHilo2 = false;
+    char elem = ' '; 
 
-    while (!terminado) {
-        struct Casilla* casillaActual = &laberinto[filaActual][columnaActual];
-        if (casillaActual->tipo == MURO) {
+    if (direccion == ARRIBA || direccion == ABAJO)
+    {
+        elem = 'y';
+    }
+    else if (direccion == IZQUIERDA || direccion == DERECHA)
+    {
+        elem = 'x';
+    }
+
+    while (!terminado)
+    {
+        struct Casilla *casillaActual = &laberinto[filaActual][columnaActual];
+        if (casillaActual->tipo == MURO)
+        {
             printf("I've hit a wall at: %d %d\n", filaActual, columnaActual);
             terminado = true;
-        }else if (casillaActual->tipo == META) {
+        }
+        else if (casillaActual->tipo == META)
+        {
             printf("I've reached the end\n");
             terminado = true;
         }
-        
-        if (direccion == ARRIBA || direccion == ABAJO) {
-            if(revisar_adjacentes_i(filaActual, columnaActual, gestor)){
-                struct Casilla* casillaIzquierda = &laberinto[filaActual][columnaActual - 1];
-                if (casillaIzquierda->tipo == PASILLO) {
-                    // TODO
+
+        if(laberinto[filaActual][columnaActual].tipo != MURO && laberinto[filaActual][columnaActual].tipo != META){
+            laberinto[filaActual][columnaActual].elemento = elem;
+        }
+
+        if (direccion == ARRIBA || direccion == ABAJO)
+        {
+            if (revisar_adjacentes_i(filaActual, columnaActual, gestor))
+            {
+                struct Casilla *casillaIzquierda = &laberinto[filaActual][columnaActual - 1];
+                if (casillaIzquierda->tipo == PASILLO)
+                {
+                    hiloQueue[0].direccion = IZQUIERDA;
+                    hiloQueue[0].filaActual = filaActual;
+                    hiloQueue[0].columnaActual = columnaActual - 1;
+                    hiloQueue[0].terminado = false;
+                    newHilo1 = true;
                     printf("Espacio en casilla izquierda de: %d %d\n", filaActual, columnaActual);
                 }
             }
-            if(revisar_adjacentes_d(filaActual, columnaActual, gestor)){
-                struct Casilla* casillaDerecha = &laberinto[filaActual][columnaActual + 1];
-                if (casillaDerecha->tipo == PASILLO) {
-                    // TODO
+            if (revisar_adjacentes_d(filaActual, columnaActual, gestor))
+            {
+                struct Casilla *casillaDerecha = &laberinto[filaActual][columnaActual + 1];
+                if (casillaDerecha->tipo == PASILLO)
+                {
+                    hiloQueue[1].direccion = DERECHA;
+                    hiloQueue[1].filaActual = filaActual;
+                    hiloQueue[1].columnaActual = columnaActual + 1;
+                    hiloQueue[1].terminado = false;
+                    newHilo2 = true;
                     printf("Espacio en casilla derecha de: %d %d\n", filaActual, columnaActual);
                 }
             }
-        } else if (direccion == IZQUIERDA || direccion == DERECHA) {
-            if (revisar_adjacentes_t(filaActual, columnaActual, gestor)) {
-                struct Casilla* casillaArriba = &laberinto[filaActual - 1][columnaActual];
-                if (casillaArriba->tipo == PASILLO) {
-                    // TODO
+        }
+        else if (direccion == IZQUIERDA || direccion == DERECHA)
+        {
+            if (revisar_adjacentes_t(filaActual, columnaActual, gestor))
+            {
+                struct Casilla *casillaArriba = &laberinto[filaActual - 1][columnaActual];
+                if (casillaArriba->tipo == PASILLO)
+                {
+                    hiloQueue[0].direccion = ARRIBA;
+                    hiloQueue[0].filaActual = filaActual - 1;
+                    hiloQueue[0].columnaActual = columnaActual;
+                    hiloQueue[0].terminado = false;
+                    newHilo1 = true;
                     printf("Espacio en casilla arriba de: %d %d\n", filaActual, columnaActual);
                 }
             }
-            if(revisar_adjacentes_b(filaActual, columnaActual, gestor)){
-                struct Casilla* casillaAbajo = &laberinto[filaActual + 1][columnaActual];
-                if (casillaAbajo->tipo == PASILLO) {
-                    // TODO
+            if (revisar_adjacentes_b(filaActual, columnaActual, gestor))
+            {
+                struct Casilla *casillaAbajo = &laberinto[filaActual + 1][columnaActual];
+                if (casillaAbajo->tipo == PASILLO)
+                {
+                    hiloQueue[1].direccion = ABAJO;
+                    hiloQueue[1].filaActual = filaActual + 1;
+                    hiloQueue[1].columnaActual = columnaActual;
+                    hiloQueue[1].terminado = false;
+                    newHilo2 = true;
                     printf("Espacio en casilla abajo de: %d %d\n", filaActual, columnaActual);
                 }
             }
         }
 
-        switch (direccion) {
-            case ARRIBA:
-                filaActual--;
-                break;
-            case ABAJO:
-                filaActual++;
-                break;
-            case IZQUIERDA:
-                columnaActual--;
-                break;
-            case DERECHA:
-                columnaActual++;
-                break;
-        } 
-        //Revisar que la siguiente casilla esta dentro de los limites del laberinto
-        if (filaActual < 0 || filaActual >= gestor->filaMax || columnaActual < 0 || columnaActual >= gestor->columnaMax) {
+        pthread_mutex_t mutex; // Declare a mutex variable
+
+        if (newHilo1 || newHilo2)
+        {
+            pthread_mutex_lock(&mutex); // Enter the critical zone
+            if (newHilo1)
+            {
+                gestor->contadorHilos++;
+                hiloQueue[0].numeroHilo = gestor->contadorHilos;
+                gestor->hilos[gestor->contadorHilos] = hiloQueue[0];
+                lilith((void *)gestor);
+                newHilo1 = false;
+            }
+            if (newHilo2)
+            {
+                gestor->contadorHilos++;
+                hiloQueue[1].numeroHilo = gestor->contadorHilos;
+                gestor->hilos[gestor->contadorHilos] = hiloQueue[1];
+                lilith((void *)gestor);
+                newHilo2 = false;  
+            }
+            pthread_mutex_unlock(&mutex); // Exit the critical zone
+        }
+
+        switch (direccion)
+        {
+        case ARRIBA:
+            filaActual--;
+            break;
+        case ABAJO:
+            filaActual++;
+            break;
+        case IZQUIERDA:
+            columnaActual--;
+            break;
+        case DERECHA:
+            columnaActual++;
+            break;
+        }
+        // Revisar que la siguiente casilla esta dentro de los limites del laberinto
+        if (filaActual < 0 || filaActual >= gestor->filaMax || columnaActual < 0 || columnaActual >= gestor->columnaMax)
+        {
             terminado = true;
         }
+        sleep(2);
     }
 
     return NULL;
 }
 
-int main() {
-    const char* nombre_archivo = "laberinto.txt";
+//Creador de nuevos hilos
+void lilith(void *arg){
+    struct GestorLaberinto *gestor = (struct GestorLaberinto *)arg;
+    struct hiloArgumentos hilo = gestor->hilos[gestor->contadorHilos];
+    pthread_t thread_nuevo;
+    gestor->hilos[gestor->contadorHilos].hilo = thread_nuevo;
+    pthread_create(&thread_nuevo, NULL, creador, (void *)gestor);
 
-    struct GestorLaberinto* gestorLaberinto;
+    for(int i = 0; i < MAX_HILOS; i++){
+        if(gestor->hilos[i].terminado){
+            pthread_join(gestor->hilos[i].hilo, NULL);
+            gestor->contadorHilos--;
+        }
+    }
+};
 
+int main()
+{
+    const char *nombre_archivo = "laberinto.txt";
+
+    struct GestorLaberinto *gestorLaberinto;
 
     gestorLaberinto = leer_laberinto(nombre_archivo);
 
@@ -291,11 +412,20 @@ int main() {
 
     gestorLaberinto->intervalo_segundos = 5;
 
+    struct hiloArgumentos *hilo = malloc(sizeof(struct hiloArgumentos));
+    hilo->direccion = DERECHA;
+    hilo->filaActual = 0;
+    hilo->columnaActual = 0;
+    hilo->terminado = false;
+    hilo->numeroHilo = 0;
+    gestorLaberinto->hilos[0] = *hilo;
+
     pthread_t thread_impresion;
-    pthread_create(&thread_impresion, NULL, imprimir_laberinto_periodicamente, (void*)gestorLaberinto);
+    pthread_create(&thread_impresion, NULL, imprimir_laberinto_periodicamente, (void *)gestorLaberinto);
 
     pthread_t thread_creador;
-    pthread_create(&thread_creador, NULL, creador, (void*)gestorLaberinto);
+    gestorLaberinto->hilos[0].hilo = thread_creador;
+    pthread_create(&thread_creador, NULL, creador, (void *)gestorLaberinto);
 
     pthread_join(thread_creador, NULL);
     pthread_join(thread_impresion, NULL);
