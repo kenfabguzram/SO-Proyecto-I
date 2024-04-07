@@ -165,7 +165,6 @@ struct GestorLaberinto* leer_laberinto(const char* nombre_archivo) {
 bool revisar_adjacentes_t(int row, int column, struct GestorLaberinto* gestorLaberinto) {
     int filaMax = gestorLaberinto->filaMax;
     struct Casilla** laberinto = gestorLaberinto->laberinto;
-    // Check if the top space is within bounds
     if (row - 1 < 0) {
         return false;
     }
@@ -176,7 +175,6 @@ bool revisar_adjacentes_t(int row, int column, struct GestorLaberinto* gestorLab
 bool revisar_adjacentes_b(int row, int column, struct GestorLaberinto* gestorLaberinto) {
     int filaMax = gestorLaberinto->filaMax;
     struct Casilla** laberinto = gestorLaberinto->laberinto;
-    // Check if the bottom space is within bounds
     if (row + 1 >= filaMax) {
         return false;
     }
@@ -187,7 +185,6 @@ bool revisar_adjacentes_b(int row, int column, struct GestorLaberinto* gestorLab
 bool revisar_adjacentes_i(int row, int column, struct GestorLaberinto* gestorLaberinto) {
     int columnaMax = gestorLaberinto->columnaMax;
     struct Casilla** laberinto = gestorLaberinto->laberinto;
-    // Check if the left space is within bounds
     if (column - 1 < 0) {
         return false;
     }
@@ -198,7 +195,6 @@ bool revisar_adjacentes_i(int row, int column, struct GestorLaberinto* gestorLab
 bool revisar_adjacentes_d(int row, int column, struct GestorLaberinto* gestorLaberinto) {
     int columnaMax = gestorLaberinto->columnaMax;
     struct Casilla** laberinto = gestorLaberinto->laberinto;
-    // Check if the right space is within bounds
     if (column + 1 >= columnaMax) {
         return false;
     }
@@ -206,7 +202,7 @@ bool revisar_adjacentes_d(int row, int column, struct GestorLaberinto* gestorLab
     return true;
 }
 
-//Creador de hilos
+//Codigo de los hilos
 void* creador(void* arg) {
     struct GestorLaberinto* gestor = (struct GestorLaberinto*)arg;
     struct Casilla** laberinto = (struct Casilla**) gestor->laberinto;
@@ -218,30 +214,26 @@ void* creador(void* arg) {
 
     while (!terminado) {
         struct Casilla* casillaActual = &laberinto[filaActual][columnaActual];
-        // Check if the current position is a wall or has already been visited 
         if (casillaActual->tipo == MURO) {
-            // Change the direction to the next one
             printf("I've hit a wall at: %d %d\n", filaActual, columnaActual);
             terminado = true;
         }else if (casillaActual->tipo == META) {
-            // The thread has reached the end of the maze
             printf("I've reached the end\n");
             terminado = true;
         }
         
-        // Check the spaces on the opposite axis to see if their "tipo" is pasillo
         if (direccion == ARRIBA || direccion == ABAJO) {
             if(revisar_adjacentes_i(filaActual, columnaActual, gestor)){
                 struct Casilla* casillaIzquierda = &laberinto[filaActual][columnaActual - 1];
                 if (casillaIzquierda->tipo == PASILLO) {
-                    // Do something
+                    // TODO
                     printf("Espacio en casilla izquierda de: %d %d\n", filaActual, columnaActual);
                 }
             }
             if(revisar_adjacentes_d(filaActual, columnaActual, gestor)){
                 struct Casilla* casillaDerecha = &laberinto[filaActual][columnaActual + 1];
                 if (casillaDerecha->tipo == PASILLO) {
-                    // Do something
+                    // TODO
                     printf("Espacio en casilla derecha de: %d %d\n", filaActual, columnaActual);
                 }
             }
@@ -249,20 +241,19 @@ void* creador(void* arg) {
             if (revisar_adjacentes_t(filaActual, columnaActual, gestor)) {
                 struct Casilla* casillaArriba = &laberinto[filaActual - 1][columnaActual];
                 if (casillaArriba->tipo == PASILLO) {
-                    // Do something
+                    // TODO
                     printf("Espacio en casilla arriba de: %d %d\n", filaActual, columnaActual);
                 }
             }
             if(revisar_adjacentes_b(filaActual, columnaActual, gestor)){
                 struct Casilla* casillaAbajo = &laberinto[filaActual + 1][columnaActual];
                 if (casillaAbajo->tipo == PASILLO) {
-                    // Do something
+                    // TODO
                     printf("Espacio en casilla abajo de: %d %d\n", filaActual, columnaActual);
                 }
             }
         }
 
-        // Move to the next position based on the current direction
         switch (direccion) {
             case ARRIBA:
                 filaActual--;
@@ -277,9 +268,8 @@ void* creador(void* arg) {
                 columnaActual++;
                 break;
         } 
-        //Check if the new position is within the bounds of the maze
+        //Revisar que la siguiente casilla esta dentro de los limites del laberinto
         if (filaActual < 0 || filaActual >= gestor->filaMax || columnaActual < 0 || columnaActual >= gestor->columnaMax) {
-            // The thread has reached the end of the maze
             terminado = true;
         }
     }
